@@ -1,0 +1,141 @@
+import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { Switch, Link, Route, useParams } from 'react-router-dom'
+import * as Ethereum from './services/Ethereum'
+import styles from './App.module.css'
+import MediumEditor from 'medium-editor'
+import 'medium-editor/dist/css/medium-editor.css'
+import 'medium-editor/dist/css/themes/default.css'
+
+const NewArticle = () => {
+  const [editor, setEditor] = useState(null)
+  const contract = useSelector(({ contract }) => contract)
+  
+  const dispatch = useDispatch()
+  const addArticle = () => dispatch(Ethereum.addArticle)
+  
+  useEffect(() => {
+    setEditor(new MediumEditor(`.${styles.editable}`, { placeholder : { text : 'Type your article'} }))
+    /*if (contract) {
+    	contract.methods.addArticle("Test2").call().then(alert)
+    }*/
+  }, [/*contract,*/ setEditor])
+  
+  /*const handleSubmit = event => {
+	alert("Content to send : " + editor.getContent())
+	//alert(contract.methods.articleContent(1))
+	//contract.methods.articleContent(1).call().then(alert)
+	
+	contract.methods.addArticle(editor.getContent()).send().then(alert)
+	contract.methods.addArticle(editor.getContent()).sendTransaction().then(alert)
+	contract.methods.addArticle(editor.getContent()).call().then(alert)
+  }*/
+  
+ return (
+    <form onSubmit={addArticle}>
+      <div className={styles.subTitle}>New article</div>
+      <div className={styles.mediumWrapper}>
+        <textarea className={styles.editable} />
+      </div>
+      <input type="submit" value="Submit" />
+    </form>
+  )
+}
+
+const Home = () => {
+  return (
+    <div className={styles.links}>
+      <Link to="/">Home</Link>
+      <Link to="/article/new">Add an article</Link>
+      <Link to="/article/all">All articles</Link>
+    </div>
+  )
+}
+
+const ReadArticle = () => {
+  let { id } = useParams(); 
+  const [content, setContent] = useState([])
+  const contract = useSelector(({ contract }) => contract)
+  useEffect(() => {
+    if (contract) {
+      contract.methods.articleContent(id).call().then(setContent)
+    }
+  }, [contract, setContent, id])
+  return content
+}
+
+const EditArticle = () => {
+  let { id } = useParams(); 
+  const [content, setContent] = useState([])
+  const contract = useSelector(({ contract }) => contract)
+  useEffect(() => {
+    if (contract) {
+      contract.methods.articleContent(id).call().then(setContent)
+    }
+  }, [contract, setContent, id])
+  
+  return (
+    <form>
+      <div className={styles.subTitle}>New article</div>
+      <div className={styles.mediumWrapper}>
+        <textarea className={styles.editable}> {content} </textarea>
+      </div>
+      <input type="submit" value="Submit" />
+    </form>
+  )
+}
+
+
+const AllArticles = () => {
+  const [articles, setArticles] = useState([])
+  const contract = useSelector(({ contract }) => contract)
+  useEffect(() => {
+    if (contract) {
+      contract.methods.getAllIds().call().then(setArticles)
+    }
+  }, [contract, setArticles])
+  
+  //{articles.map(article => <Link to={`/article/${article}`} param={{articleId: {article}}}> Article {article} </Link> )}
+  return <div>
+  	{articles.map(article =>
+  	  <div>
+  		<Link to={`/article/read/${article}`}> Article {article} </Link>
+  		<Link to={`/article/edit/${article}`}> Edit </Link>
+  	  </div>
+  	)}
+  </div>
+}
+
+const NotFound = () => {
+  return <div>Not found</div>
+}
+
+const App = () => {
+  const dispatch = useDispatch()
+  useEffect(() => {
+    dispatch(Ethereum.connect)
+  }, [dispatch])
+  return (
+    <div className={styles.app}>
+      <div className={styles.title}>Welcome to Decentralized Wikipedia</div>
+      <Switch>
+        <Route path="/article/new">
+          <NewArticle />
+        </Route>
+        <Route exact path="/">
+          <Home />
+        </Route>
+        <Route path="/article/all">
+          <AllArticles />
+        </Route>
+        <Route name="read" path="/article/read/:id" component={ReadArticle}/>
+        <Route path="/article/edit/:id" component={EditArticle}/>
+        <Route>
+          <NotFound />
+        </Route>
+      </Switch>
+    </div>
+  )
+}
+
+export default App
