@@ -17,7 +17,8 @@ const NewArticle = () => {
   
   const handleSubmit = async event => {
   	var text = document.querySelector('[contenteditable]').innerHTML;
-  	if (contract && text) 
+  	if (contract && text) {
+  	  alert("in sending zone")
       await contract.methods.addArticle(text).send({from : account}) ;
     }
   }
