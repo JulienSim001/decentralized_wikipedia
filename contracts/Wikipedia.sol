@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 
 contract Wikipedia {
+
   struct Article {
     string content;
   }
@@ -11,6 +12,7 @@ contract Wikipedia {
   constructor() public {
     uint index = 0;
     ids.push(index);
+
     Article memory newArticle = Article("This is your first article in your contract");
     articlesById[index] = newArticle;
   }
@@ -25,26 +27,34 @@ contract Wikipedia {
 
   // Write your code here.
   
-  uint nb = 1;
-  
-  /*event Update (
-    address from,
-  	uint index,
+  event ArticleAdded(
+    address _from,
     string content
-  );*/
+  );
+  
+  event ArticleUpdated(
+    address _from,
+    uint index,
+    string content
+  );
   
   function addArticle(string memory content) public returns (bool success) {
-    //address _from = msg.sender;
-    ids.push(nb);
-  	//emit Update(_from, nb, content);
+    address _from = msg.sender;
+    uint index = ids.length;
+    ids.push(index);
+    emit ArticleAdded(_from, content);
+  	
   	Article memory newArticle = Article(content);
-  	articlesById[nb] = newArticle;
-  	nb = nb + 1;
+  	articlesById[index] = newArticle;
+  	
   	return true;
   }
   
   function updateArticle(uint index, string memory content) public returns (bool success) {
+    address _from = msg.sender;
+    emit ArticleUpdated(_from, index, content);
   	articlesById[index].content = content;
+  	
   	return true;
   }
 }

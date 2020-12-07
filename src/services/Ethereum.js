@@ -21,12 +21,4 @@ const connect = async dispatch => {
   }
 }
 
-const addArticle = async (dispatch, getState) => {
-  const { account, contract } = getState()
-  
-  if (contract && account) {
-  	await contract.methods.addArticle("Test4").send({from : account})
-  }
-}
-
-export { connect , addArticle }
+export { connect }

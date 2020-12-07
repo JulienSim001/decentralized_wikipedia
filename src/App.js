@@ -1,4 +1,3 @@
-import React from 'react'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Switch, Link, Route, useParams } from 'react-router-dom'
@@ -10,25 +9,29 @@ import 'medium-editor/dist/css/themes/default.css'
 
 
 const NewArticle = () => {
-  const [editor, setEditor] = useState(null)
-  const { contract, account } = useSelector(({ contract, account }) => { return { contract, account }}) 
-  //const dispatch = useDispatch()
+  const { contract, account } = useSelector(({ contract, account }) => { return { contract, account }})
   
   useEffect(() => {
-    setEditor(new MediumEditor(`.${styles.editable}`, { placeholder : { text : 'Type your article'} }))
-  }, [setEditor])
+    new MediumEditor(`.${styles.editable}`, { placeholder : { text : 'Type your article'} })
+  })
   
-  const handleSubmit = event => {
-	contract.methods.addArticle(editor.getContent()).send({from : account})
+  const handleSubmit = async event => {
+  	var text = document.querySelector('[contenteditable]').innerHTML;
+  	if (contract && text) {
+  	  alert("in sending zone")
+      await contract.methods.addArticle(text).send({from : account}) ;
+    }
   }
   
- return (
-    <form onSubmit={handleSubmit}>
+  const editField = <div contenteditable='true' className={styles.editable} />
+  
+  return (
+    <form>
       <div className={styles.subTitle}>New article</div>
       <div className={styles.mediumWrapper}>
-        <textarea className={styles.editable} />
+        {editField}
       </div>
-      <input type="submit" value="Submit" />
+      <input type="submit" value="Submit" onClick={handleSubmit} />
     </form>
   )
 }
@@ -53,27 +56,28 @@ const ReadArticle = () => {
     }
   }, [contract, setContent, id])
   
-  //return {content}
   return ( <div dangerouslySetInnerHTML={{__html: content}}/> )
 }
 
 
 const EditArticle = () => {
   let { id } = useParams(); 
-  const [state, setState] = useState({content: "", editor: null})
+  const [content, setContent] = useState([])
   const { contract, account } = useSelector(({ contract, account }) => { return { contract, account }})
   
   useEffect(() => {
     if (contract) {
-        contract.methods.articleContent(id).call().then(rep => setState({content: rep}));
+      contract.methods.articleContent(id).call().then(setContent);
     }
-  }, [contract, setState, id])
+  }, [contract, setContent, id])
   
-  const editField = <div contenteditable='true' id="editField" className={styles.editable} dangerouslySetInnerHTML={{__html: state.content}} />
+  const editField = <div contenteditable='true' id="editField" className={styles.editable} dangerouslySetInnerHTML={{__html: content}} />
   
-  const handleSubmit = event => {
-  	var textField = document.querySelector('[contenteditable]');
-	contract.methods.updateArticle(id, textField.innerHTML).send({from : account});
+  const handleSubmit = async event => {
+  	var text = document.querySelector('[contenteditable]').innerHTML;
+  	if (contract && text) {
+  	  await contract.methods.updateArticle(id, text).send({from : account});
+  	}
   }
   
   return (
@@ -92,9 +96,7 @@ const AllArticles = () => {
   const [articles, setArticles] = useState([])
   const contract = useSelector(({ contract }) => contract)
   useEffect(() => {
-    if (contract) {
-      contract.methods.getAllIds().call().then(setArticles)
-    }
+    contract.methods.getAllIds().call().then(setArticles)
   }, [contract, setArticles])
   
   return <div>
@@ -129,7 +131,7 @@ const App = () => {
         <Route path="/article/all">
           <AllArticles />
         </Route>
-        <Route name="read" path="/article/read/:id" component={ReadArticle}/>
+        <Route path="/article/read/:id" component={ReadArticle}/>
         <Route path="/article/edit/:id" component={EditArticle}/>
         <Route>
           <NotFound />
